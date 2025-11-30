@@ -33,11 +33,6 @@ public class VideojuegoResources {
     @GetMapping("/inicializar")
     public ResponseEntity<String> inicializarDatos() {
         try {
-            // Verificar si ya hay datos
-            if (videojuegoRepository.count() > 0) {
-                return ResponseEntity.ok("Ya existen datos en la base de datos. Total: " + videojuegoRepository.count() + " registros.");
-            }
-            
             // Crear datos de prueba
             List<VideojuegosVO> juegosDemo = Arrays.asList(
                 crearVideojuego("Elden Ring", "RPG de mundo abierto creado por FromSoftware y George R. R. Martin", 
