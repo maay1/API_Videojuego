@@ -29,10 +29,48 @@ public class VideojuegoResources {
     @Autowired
     private VideojuegoRepository videojuegoRepository;
     
-    // Endpoint para inicializar datos de prueba
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+    
+    @GetMapping("/crear-tabla")
+    public ResponseEntity<String> crearTabla() {
+        try {
+            // Crear tabla videojuegos_api con auto-incremental
+            entityManager.createNativeQuery(
+                "CREATE TABLE IF NOT EXISTS videojuegos_api (" +
+                "id_juego SERIAL PRIMARY KEY, " +
+                "nombre VARCHAR(255) NOT NULL, " +
+                "descripcion TEXT, " +
+                "precio DECIMAL(10,2), " +
+                "img VARCHAR(700), " +
+                "categoria VARCHAR(100), " +
+                "stock INT, " +
+                "fecha_lanzamiento DATE)"
+            ).executeUpdate();
+            
+            return ResponseEntity.ok(" Tabla 'videojuegos_api' creada correctamente con AUTO-INCREMENT");
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                               .body("Error creando tabla: " + e.getMessage());
+        }
+    }
+    
+    // Endpoint para inicializar datos de prueb
     @GetMapping("/inicializar")
     public ResponseEntity<String> inicializarDatos() {
         try {
+            try {
+                videojuegoRepository.count(); // Intenta contar para ver si la tabla existe
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                   .body("❌ La tabla no existe. Ejecuta primero: /api/crear-tabla");
+            }
+            
+            // Verificar si ya hay datos
+            if (videojuegoRepository.count() > 0) {
+                return ResponseEntity.ok("Ya existen datos. Total: " + videojuegoRepository.count() + " registros.");
+            }
             // Crear datos de prueba
             List<VideojuegosVO> juegosDemo = Arrays.asList(
                 crearVideojuego("Elden Ring", "RPG de mundo abierto creado por FromSoftware y George R. R. Martin", 

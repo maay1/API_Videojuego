@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 
 @Entity
-@Table(name = "videojuego")
+@Table(name = "videojuegos_api")
 public class VideojuegosVO {
     
     @Id
