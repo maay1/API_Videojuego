@@ -3,6 +3,8 @@ package com.idat.storeplay_API.vo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -13,6 +15,7 @@ import java.sql.Date;
 public class VideojuegosVO {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id_juego;
     private String nombre;
     private String descripcion;
