@@ -1,13 +1,15 @@
-FROM eclipse-temurin:17-jdk-alpine
+FROM maven:3.8.5-openjdk-17-slim AS build
 WORKDIR /app
 # Copiar archivos del proyecto
-COPY . .
-# Dar permisos de ejecucion a mvnw
-RUN chmod +x mvnw
+COPY pom.xml .
+COPY src ./src
 # Construir el JAR
-RUN ./mvnw clean package -DskipTests
-# Encontrar y copiar el JAR
-RUN find target -name "*.jar" -exec cp {} app.jar \;
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+# Copiar el JAR desde la etapa de construcción
+COPY --from=build /app/target/*.jar app.jar
 # Ejecutar la aplicacion
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dserver.port=${PORT}", "-jar", "app.jar"]
