@@ -30,7 +30,7 @@ public class VideojuegoResources {
     private VideojuegoDao videojuegosDAO;
     
     // Endpoint para inicializar datos de prueba
-    @PostMapping("/inicializar-datos")
+    @GetMapping("/inicializar")
     public ResponseEntity<String> inicializarDatos() {
         try {
             // Verificar si ya hay datos
