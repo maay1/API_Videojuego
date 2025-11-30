@@ -4,13 +4,13 @@
  */
 package com.idat.storeplay_API.resources;
 
-import com.idat.storeplay_API.dao.VideojuegoDao;
+import com.idat.storeplay_API.repository.VideojuegoRepository;
 import com.idat.storeplay_API.vo.VideojuegosVO;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,19 +27,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class VideojuegoResources {
     @Autowired
-    private VideojuegoDao videojuegosDAO;
+    private VideojuegoRepository videojuegoRepository;
     
     // Endpoint para inicializar datos de prueba
     @GetMapping("/inicializar")
     public ResponseEntity<String> inicializarDatos() {
         try {
             // Verificar si ya hay datos
-            Collection<VideojuegosVO> datosExistentes = videojuegosDAO.findAll();
-            if (!datosExistentes.isEmpty()) {
-                return ResponseEntity.ok("Ya existen datos en la base de datos. Total: " + datosExistentes.size() + " registros.");
+            if (videojuegoRepository.count() > 0) {
+                return ResponseEntity.ok("Ya existen datos en la base de datos. Total: " + videojuegoRepository.count() + " registros.");
             }
             
-            // Crear datos de prueba con los juegos proporcionados
+            // Crear datos de prueba
             List<VideojuegosVO> juegosDemo = Arrays.asList(
                 crearVideojuego("Elden Ring", "RPG de mundo abierto creado por FromSoftware y George R. R. Martin", 
                                new BigDecimal("59.99"), "https://imgs.search.brave.com/VVZ3N3jClTDgVQFgWnSP0FHRATGMzwb6dHgf8WhJXps/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zdGF0/aWMuYmFuZGFpbmFt/Y29lbnQuZXUvaGln/aC9lbGRlbi1yaW5n/L2VsZGVuLXJpbmcv/MDAtcGFnZS1zZXR1/cC9lbGRlbi1yaW5n/LWdhbWUtdGh1bWJu/YWlsLmpwZw", 
@@ -48,7 +47,6 @@ public class VideojuegoResources {
                 crearVideojuego("Cyberpunk 2077", "RPG futurista en Night City con mundo abierto y narrativa profunda", 
                                new BigDecimal("59.99"), "https://imgs.search.brave.com/WjNcwJgrwU-u60RhtExi7lZ68n3TdQogaU0qyLimEZY/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nYW1lc3RvcC5j/b20vaS9nYW1lc3Rv/cC8xMDE3ODUxMV8x/MTA5NDU5NF8xMTA5/NDcyMF8xMTA5NDcy/MV8xMTA5NDcyMl8x/MTA5NDc0NTJfU0NS/MDIvQ3liZXJwdW5r/LTIwNzctLS1QbGF5/U3RhdGlvbi00P3c9/MTI1NiZoPTY2NCZm/bXQ9YXV0bw", 
                                "RPG", 120, "2020-12-10"),
-                
                 crearVideojuego("Red Dead Redemption 2", "Aventura épica en el Salvaje Oeste con historia cinematográfica", 
                                new BigDecimal("59.99"), "https://imgs.search.brave.com/Kj8cdW9rxEWgMTwqV_S0fMDtrlB6VIiW99aw20mLkQQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnl0/aW1nLmNvbS92aV93/ZWJwL0pYWktMZkxa/a3Y4L21heHJlc2Rl/ZmF1bHQud2VicA", 
                                "Acción", 90, "2019-11-05"),
@@ -82,10 +80,8 @@ public class VideojuegoResources {
                                "Party", 300, "2018-11-16")
             );
             
-            // Insertar cada juego
-            for (VideojuegosVO juego : juegosDemo) {
-                videojuegosDAO.add(juego);
-            }
+            // Guardar todos - ¡MÁS SIMPLE!
+            videojuegoRepository.saveAll(juegosDemo);
             
             return ResponseEntity.status(HttpStatus.CREATED)
                                .body("¡Datos inicializados correctamente! Se insertaron " + juegosDemo.size() + " videojuegos.");
@@ -120,60 +116,54 @@ public class VideojuegoResources {
         }
     }
     
-    //obtener - get
+    // Obtener todos - GET
     @GetMapping("/videojuego")
-    public Collection<VideojuegosVO> getVideojuego(){
-        return videojuegosDAO.findAll();
+    public List<VideojuegosVO> getVideojuego(){
+        return videojuegoRepository.findAll();
     }
     
-     //obtener x id - by id
+    // Obtener por ID - GET
     @GetMapping("/videojuego/{id}")
-    public ResponseEntity<VideojuegosVO> getVideojuegoXId(@PathVariable int id) throws ClassNotFoundException{
-        VideojuegosVO juego = videojuegosDAO.findById(id);
-        if(juego != null){
-            return ResponseEntity.ok(juego);
+    public ResponseEntity<VideojuegosVO> getVideojuegoXId(@PathVariable int id){
+        Optional<VideojuegosVO> juego = videojuegoRepository.findById(id);
+        if(juego.isPresent()){
+            return ResponseEntity.ok(juego.get());
         }else{
             return ResponseEntity.notFound().build();
         }
     }
     
-    //agregar - add
+    // Agregar - POST
     @PostMapping("/agregar/videojuego")
-    public ResponseEntity<String> addVideojuego(@RequestBody VideojuegosVO videojuego){
-        try{
-            videojuegosDAO.add(videojuego);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Videojuego agregado exitosamente");         
-        }catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: "+ e.getMessage());
-        }
+    public ResponseEntity<VideojuegosVO> addVideojuego(@RequestBody VideojuegosVO videojuego){
+        VideojuegosVO nuevoJuego = videojuegoRepository.save(videojuego);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoJuego);
     }
     
-    //actualizar - update
+    // Actualizar - PUT
     @PutMapping("/actualizar/videojuego/{id}")
-    public ResponseEntity<String> updateVideojuego(@PathVariable int id,@RequestBody VideojuegosVO videojuego){
-        try{
-            videojuego.setId_juego(id);
-            videojuegosDAO.update(videojuego);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Videojuego actualizado con exito");
-        }catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: "+ e.getMessage());
+    public ResponseEntity<VideojuegosVO> updateVideojuego(@PathVariable int id, @RequestBody VideojuegosVO videojuego){
+        if (!videojuegoRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
         }
+        videojuego.setId_juego(id);
+        VideojuegosVO juegoActualizado = videojuegoRepository.save(videojuego);
+        return ResponseEntity.ok(juegoActualizado);
     }
     
-    //eliminar - delete
+    // Eliminar - DELETE
     @DeleteMapping("/eliminar/videojuego/{id}")
     public ResponseEntity<String> deleteVideojuego(@PathVariable int id){
-        try{
-            videojuegosDAO.delete(id);
-            return ResponseEntity.ok("Videojuego eliminado exitosamente");
-        }catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                               .body("Error: " + e.getMessage());
+        if (!videojuegoRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
         }
+        videojuegoRepository.deleteById(id);
+        return ResponseEntity.ok("Videojuego eliminado exitosamente");
     }
     
-    @GetMapping("/api")
-    public String ping(){
-        return "ping";
+    // Endpoint de prueba
+    @GetMapping("/test")
+    public String test(){
+        return "API funcionando - " + new java.util.Date();
     }
 }
