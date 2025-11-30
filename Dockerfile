@@ -1,20 +1,13 @@
-FROM maven:3.8.5-openjdk-17 AS build
+FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
-# Copiar archivos de configuración
-COPY pom.xml .
-COPY nbactions.xml .
-# Copiar código fuente
-COPY src ./src
-# Compilar el proyecto
-RUN mvn clean package -DskipTests
-# Etapa 2: Ejecución
-FROM openjdk:17-jdk-slim
-WORKDIR /app
-# Copiar el JAR generado (Spring Boot)
-COPY --from=build /app/target/*.jar app.jar
-# Puerto que usa Render
+# Copiar archivos del proyecto
+COPY . .
+# Dar permisos de ejecucion a mvnw
+RUN chmod +x mvnw
+# Construir el JAR
+RUN ./mvnw clean package -DskipTests
+# Encontrar y copiar el JAR
+RUN find target -name "*.jar" -exec cp {} app.jar \;
+# Ejecutar la aplicacion
 EXPOSE 8080
-# Variable de entorno para el puerto
-ENV PORT=8080
-# Comando para ejecutar la aplicación Spring Boot
-CMD ["java", "-Dserver.port=${PORT}", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
